@@ -1,0 +1,20 @@
+Nota
+====
+Simple Zsh plugin to help my ADHD switch contexts a little bit faster and hopefully get some work done :)
+
+Installation
+============
+```
+# mkdir -p /usr/share/zsh/plugins/nota
+# cp nota.zsh /usr/share/zsh/plugins/nota/
+```
+
+and make sure to `source` it somewhere in your shell startup scripts
+
+```
+source /usr/share/zsh/plugins/nota/nota.zsh
+```
+
+Usage
+======
+Just `notaadd`, `notaedit`, `notalist`, and `notadone` those are the most important functions to manage your `$NOTA_FILE` and `$NOTA_ARCIVE`

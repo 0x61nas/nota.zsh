@@ -100,7 +100,7 @@ notalist() {
   local selected_nota_pwd=$(awk -v id="$selected_nota_id" '
     /^#/ { in_nota_block=0 }
     $0 ~ "^#" id ":" { in_nota_block=1 }
-    /^+> / && in_nota_block { print $2; exit }
+    /^~> / && in_nota_block { print $2; exit }
   ' "$NOTA_FILE")
 
   local selected_nota_command=$(awk -v id="$selected_nota_id" '

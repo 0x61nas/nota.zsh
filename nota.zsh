@@ -1,5 +1,30 @@
 : "${NOTA_FILE:=$HOME/.notas}"
 : "${NOTA_ARCHIVE:=$HOME/.notas.archive}"
+_NOTA_CACHED_NEXT_ID=1
+_NOTA_FILE_LAST_TIMESTAMP=0
+
+_nota_read_nextid() {
+	if [[ -e "$NOTA_FILE" ]]; then
+		local count_line=$(head -1 "$NOTA_FILE")
+		_NOTA_CACHED_NEXT_ID=$(echo "$count_line" | grep -o '[0-9]\+')
+	else
+		_NOTA_CACHED_NEXT_ID=1
+		{
+			echo "NEXT_ID: 1"
+			echo "@@@"
+			echo
+		} > "$NOTA_FILE"
+	fi
+}
+
+_recache_nota_count() {
+	local kurrent_timestamp=$(stat -c %Y "$NOTA_FILE")
+	if [[ $_NOTA_FILE_LAST_TIMESTAMP -ne $kurrent_timestamp ]]; then
+		_nota_read_nextid
+		_NOTA_FILE_LAST_TIMESTAMP=kurrent_timestamp
+	fi
+}
+_recache_nota_count
 
 _nota_fzf_select() {
 	# Extract notas in a format suitable for fzf (ID and Title)
@@ -29,6 +54,7 @@ _nota_block_by_id() {
 }
 
 notaadd() {
+	_recache_nota_count
   local title="$1"
 	local description="$2"
 	local autorun="$3"
@@ -55,20 +81,9 @@ notaadd() {
 
   # Generate the added date, nota_ID, and PWD
   local added_date=$(date '+%Y-%m-%d %H:%M')
-  local nota_id
-	if [[ -e "$NOTA_FILE" ]]; then
-		local count_line=$(head -1 "$NOTA_FILE")
-		nota_id=$(echo "$count_line" | grep -o '[0-9]\+')
-	else
-		nota_id=1
-		{
-			echo "NEXT_ID: 1"
-			echo "@@@"
-			echo
-		} > "$NOTA_FILE"
-	fi
 
   # Append the nota to the file
+	local nota_id=$_NOTA_CACHED_NEXT_ID
   {
     echo "#$nota_id: $title @$added_date"
     [[ -n "$description" ]] && echo "+> $description"
@@ -78,8 +93,9 @@ notaadd() {
 		echo
   } >> "$NOTA_FILE"
 
-	local next_id=$((nota_id + 1))
-	sed -i "1s/NEXT_ID: [0-9]\+/NEXT_ID: $next_id/" "$NOTA_FILE"
+	_NOTA_CACHED_NEXT_ID=$((nota_id + 1))
+	sed -i "1s/NEXT_ID: [0-9]\+/NEXT_ID: $_NOTA_CACHED_NEXT_ID/" "$NOTA_FILE"
+	_NOTA_FILE_LAST_TIMESTAMP=$(stat -c %Y "$NOTA_FILE")
 
   echo "Added nota #$nota_id: $title"
 }
